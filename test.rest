@@ -1,0 +1,29 @@
+### Créer la table
+GET http://localhost:5000/setup
+
+### Ajouter un todo
+POST http://localhost:5000/todos
+Content-Type: application/json
+
+{
+  "name": "Apprendre Node.js",
+  "status": false
+}
+
+### Lire tous les todos
+GET http://localhost:5000/todos
+
+### Lire un todo par ID
+GET http://localhost:5000/todos/1
+
+### Mettre à jour un todo
+PUT http://localhost:5000/todos/1
+Content-Type: application/json
+
+{
+  "name": "Apprendre Node.js et Express",
+  "status": true
+}
+
+### Supprimer un todo
+DELETE http://localhost:5000/todos/1
