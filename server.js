@@ -3,11 +3,12 @@ const pool = require('./db');
 const redis = require('redis');
 const port = 5000;
 
-const redisClient = redis.createClient();
+const redisClient = redis.createClient({
+  url: `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`
+});
 const app = express(); 
 app.use(express.json());
 
-// Connexion Redis
 (async () => {
   redisClient.on('error', (err) => {
     console.error("Erreur client redis", err);
@@ -19,7 +20,7 @@ app.use(express.json());
   await redisClient.ping();
 })();
 
-// Setup de la table (si elle n’existe pas déjà)
+
 app.get('/setup', async (req, res) => {
   try {
     await pool.query(`
@@ -46,7 +47,7 @@ app.get('/todos', async (req, res) => {
     }
 
     const result = await pool.query('SELECT * FROM todos ORDER BY id ASC');
-    await redisClient.set('todos', JSON.stringify(result.rows), { EX: 60 }); // cache 60 sec
+    await redisClient.set('todos', JSON.stringify(result.rows), { EX: 60 }); 
     res.status(200).json(result.rows);
   } catch (error) {
     console.error(error);
@@ -54,7 +55,7 @@ app.get('/todos', async (req, res) => {
   }
 });
 
-// Lire un todo par ID (avec cache Redis)
+
 app.get('/todos/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -77,7 +78,7 @@ app.get('/todos/:id', async (req, res) => {
   }
 });
 
-// Créer un nouveau todo (et invalider le cache)
+
 app.post('/todos', async (req, res) => {
   const { name, status } = req.body;
   try {
@@ -90,7 +91,7 @@ app.post('/todos', async (req, res) => {
   }
 });
 
-// Mettre à jour un todo (et invalider le cache)
+
 app.put('/todos/:id', async (req, res) => {
   const { id } = req.params;
   const { name, status } = req.body;
@@ -112,7 +113,6 @@ app.put('/todos/:id', async (req, res) => {
   }
 });
 
-// Supprimer un todo (et invalider le cache)
 app.delete('/todos/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -130,4 +130,4 @@ app.delete('/todos/:id', async (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Serveur lancé sur http://localhost:${port}`));
+app.listen(port, '0.0.0.0', () => console.log(`Serveur lancé sur http://localhost:${port}`));
